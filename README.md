@@ -20,8 +20,8 @@ The AI runs in mock mode by default, so no API key is needed. Coding agents: rea
 
 ## How it is deployed
 
-- Pull requests: GitHub Actions runs lint, typecheck, unit tests, migrations, build and a browser smoke test. Vercel builds a preview.
-- `main`: Vercel deploys to production; new migrations are applied to the Supabase database by `.github/workflows/migrate.yml`.
+- Pull requests: GitHub Actions runs lint, typecheck, unit tests, migrations, build and a browser smoke test (`ci.yml`), and deploys a Vercel preview whose link is posted on the PR (`deploy.yml`).
+- `main`: `deploy.yml` applies new migrations to the Supabase database, then deploys to Vercel production. Vercel's own Git integration is off; all deploys go through GitHub Actions.
 
 ## Data and privacy
 
