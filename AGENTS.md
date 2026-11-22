@@ -12,9 +12,8 @@ MealCrafter is a phone-first web app for CSE 594 (Human-AI Interaction, Fall 202
 
 ```bash
 pnpm install
-cp .env.example .env.local   # then set SESSION_SECRET (openssl rand -base64 32)
-pnpm db:up                   # local Postgres in Docker (port 54329)
-pnpm db:migrate && pnpm db:seed
+pnpm setup                   # once: .env.local, local Postgres in Docker (port 54329), migrations, demo data
+pnpm db:up                   # later sessions: start the database again after a reboot
 pnpm dev                     # log in with the code sam-demo (local only; production uses DEMO_CODE)
 pnpm check                   # lint + typecheck + unit tests; run before every PR
 pnpm test:e2e                # Playwright smoke test (needs `pnpm build` and a seeded DB)
