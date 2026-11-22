@@ -58,11 +58,24 @@ describe("checkMeal", () => {
   it("removes prepared food with unknown contents when the user has rules", () => {
     const items = inv([ready("l", "Leftover curry", { contentsKnown: false })]);
     expect(checkMeal([{ name: "Leftover curry", itemId: "l" }], ["pork"], items).allowed).toBe(false);
-    expect(checkMeal([{ name: "Leftover curry", itemId: "l" }], [], items).allowed).toBe(true);
+    expect(checkMeal([{ name: "Leftover curry", itemId: "l" }], [], items).allowed).toBe(true); // no rules, nothing to verify
   });
 
   it("never uses items that are not mine", () => {
     const items = inv([ready("y", "Greek yogurt", { status: "not_mine" })]);
     expect(checkMeal([{ name: "Greek yogurt", itemId: "y" }], [], items).allowed).toBe(false);
+  });
+});
+
+describe("checkMeal gaps found in review", () => {
+  it("checks the linked item's own name, not only the ingredient label", () => {
+    const items = inv([ready("g", "Almond granola")]);
+    const r = checkMeal([{ name: "crunchy topping", itemId: "g" }], ["tree_nuts"], items);
+    expect(r.allowed).toBe(false);
+  });
+
+  it("removes any item with unknown contents when the user has rules", () => {
+    const items = inv([ready("l", "Leftover curry", { contentsKnown: false, mayContain: ["milk"] })]);
+    expect(checkMeal([{ name: "Leftover curry", itemId: "l" }], ["pork"], items).allowed).toBe(false);
   });
 });

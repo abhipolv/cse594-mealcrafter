@@ -16,7 +16,9 @@ export async function recognize(input: RecognizeInput): Promise<ProviderResult<R
   return liveRecognize(input);
 }
 
-export async function suggest(input: SuggestInput): Promise<ProviderResult<SuggestedMeal[]>> {
+// Returns meals that have NOT passed the rule filter. Only suggestMeals() in
+// src/lib/meals.ts may call this (enforced by eslint.config.mjs).
+export async function unfilteredSuggest(input: SuggestInput): Promise<ProviderResult<SuggestedMeal[]>> {
   if (aiMode() === "mock") return { value: mockSuggest(input), model: "mock" };
   const { liveSuggest } = await import("./anthropic");
   return liveSuggest(input);

@@ -15,7 +15,7 @@ pnpm install
 cp .env.example .env.local   # then set SESSION_SECRET (openssl rand -base64 32)
 pnpm db:up                   # local Postgres in Docker (port 54329)
 pnpm db:migrate && pnpm db:seed
-pnpm dev                     # log in with the code sam-demo
+pnpm dev                     # log in with the code sam-demo (local only; production uses DEMO_CODE)
 pnpm check                   # lint + typecheck + unit tests; run before every PR
 pnpm test:e2e                # Playwright smoke test (needs `pnpm build` and a seeded DB)
 ```
@@ -26,20 +26,21 @@ pnpm test:e2e                # Playwright smoke test (needs `pnpm build` and a s
 
 - `src/app/(app)/...`: one folder per screen; the route for each screen code is in `src/lib/screens.ts`. Unbuilt screens render `<ScreenStub code="..."/>`; replace the stub when you build the screen.
 - `src/lib/db/schema.ts`: the data model shared by all tracks. Changing it needs `pnpm db:generate` and a committed migration in `drizzle/`; CI fails otherwise. Say "schema change" in the PR title.
-- `src/lib/ai/`: the **food recognizer** and **meal suggester**. `types.ts` holds the contracts, `mock.ts` the recorded responses, `anthropic.ts` the live calls. Screens call `recognize()` and `suggest()` from `src/lib/ai/index.ts`, never the SDK directly.
+- `src/lib/ai/`: the **food recognizer** and **meal suggester**. `types.ts` holds the contracts, `mock.ts` the recorded responses, `anthropic.ts` the live calls. Screens call `recognize()` from `src/lib/ai/index.ts` and `suggestMeals()` from `src/lib/meals.ts`, never the SDK directly.
 - `src/lib/rules/`: the **rule filter** (plain code, no AI) and the rule vocabulary.
 - `src/lib/auth/session.ts`: login by study code. Call `requireUser()` in every page, server action and route handler that touches user data.
 - `src/lib/events.ts` and `<ScreenView/>`: the study log.
 
 ## Rules that must hold
 
-1. **Every meal shown to a user has passed `checkMeal()`** in `src/lib/rules/filter.ts`. Store what it removed in `suggestions.filteredOut`. This is how we meet N1 (zero rule violations). Never bypass it, never let a model decide the outcome.
+1. **Get meals only through `suggestMeals()`** in `src/lib/meals.ts`. It runs the rule filter (`src/lib/rules/filter.ts`) and records what it removed in `suggestions.filteredOut`. This is how we meet N1 (zero rule violations). Lint blocks importing the unfiltered suggester or the Anthropic SDK anywhere else; do not work around it. Any new code that turns model output into meals (replanning, recipes) must go through `applyRuleFilter()` the same way.
 2. **Items with status other than `ready` never go into meals.** Unchecked, `not_mine`, `unclear` and `rejected` items are excluded (F2, F3, N3).
 3. **The app never says food is safe to eat or not spoiled.** It shows the basis (age, storage guideline and source) and asks the user to check (N1).
 4. **Each item shown from a scan has its evidence** (photo crop or receipt text) and a confidence level (N2).
 5. **Log the study events.** Put `<ScreenView code="..."/>` on every screen, and call `track()` for primary actions, review-card answers (`check_answer`) and meal results. Event names are listed in `src/lib/events.ts`; add new ones there.
 6. **Privacy:** never commit photos, videos, receipts, participant data or keys; `.gitignore` blocks common media types, do not override it. Do not describe or store medication or other private items from scans (N6).
 7. **Model calls happen only on the server** and only for a logged-in user.
+8. **Dates use `src/lib/time.ts`** (`today()`, `addDays()`, `formatDay()`), which works in Ann Arbor time. The server runs in UTC, so `new Date().toISOString()` gives tomorrow's date every evening.
 
 ## Look and copy
 

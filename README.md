@@ -13,7 +13,7 @@ pnpm install
 cp .env.example .env.local      # set SESSION_SECRET: openssl rand -base64 32
 pnpm db:up                      # Postgres in Docker on port 54329
 pnpm db:migrate && pnpm db:seed
-pnpm dev                        # http://localhost:3000, log in with sam-demo
+pnpm dev                        # http://localhost:3000, log in with sam-demo (local only)
 ```
 
 The AI runs in mock mode by default, so no API key is needed. Coding agents: read `AGENTS.md`.

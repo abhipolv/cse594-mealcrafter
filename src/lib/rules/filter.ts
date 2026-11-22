@@ -5,6 +5,8 @@
 //      tag, or
 //   3. an ingredient comes from an item the user has not checked, or whose
 //      contents are unknown while the user has any rule (we cannot verify it).
+//      The recognizer marks single plain foods (eggs, a pepper) and readable
+//      labels as contents_known; answering a review card should set it too.
 // This is what lets us claim N1 (zero rule violations) even when a model is wrong.
 import { RULE_KEYWORDS, RULE_LABELS, type RuleTag } from "./taxonomy";
 
@@ -32,6 +34,15 @@ export function matchTags(text: string, tags: readonly RuleTag[]): RuleTag[] {
   );
 }
 
+const STATUS_REASON: Record<string, string> = {
+  needs_check: "not checked yet",
+  reserved: "saved for a planned meal",
+  not_mine: "not yours",
+  unclear: "not identified",
+  rejected: "not in your fridge",
+  used: "already used",
+};
+
 export function checkMeal(
   ingredients: FilterIngredient[],
   userTags: readonly RuleTag[],
@@ -51,28 +62,19 @@ export function checkMeal(
       continue;
     }
     if (item.status !== "ready") {
-      reasons.push(`${item.name}: not checked yet`);
+      reasons.push(`${item.name}: ${STATUS_REASON[item.status] ?? "not available"}`);
       continue;
+    }
+    for (const tag of matchTags(item.name, userTags)) {
+      reasons.push(`${item.name}: ${RULE_LABELS[tag].toLowerCase()}`);
     }
     for (const tag of item.mayContain.filter((t) => userTags.includes(t))) {
       reasons.push(`${item.name}: may contain ${RULE_LABELS[tag].toLowerCase()}`);
     }
-    if (userTags.length > 0 && !item.contentsKnown && matchTags(item.name, userTags).length === 0) {
-      // Name looks fine but we do not actually know what is in it.
-      if (item.mayContain.length === 0 && looksComposite(item.name)) {
-        reasons.push(`${item.name}: ingredients unknown`);
-      }
+    if (userTags.length > 0 && !item.contentsKnown) {
+      reasons.push(`${item.name}: ingredients unknown`);
     }
   }
 
   return { allowed: reasons.length === 0, reasons: [...new Set(reasons)] };
-}
-
-// Single foods (eggs, bell pepper) are safe to judge by name; prepared or
-// packaged foods (sauce, leftovers, spread) can hide anything.
-const COMPOSITE = ["sauce", "leftover", "leftovers", "spread", "dressing", "dip", "soup", "curry", "stew", "mix", "cookie", "cookies", "cake", "bar", "bars", "cereal", "snack", "container", "tub", "jar", "dessert", "pudding", "dumplings", "frozen meal"];
-
-function looksComposite(name: string): boolean {
-  const hay = normalize(name);
-  return COMPOSITE.some((w) => hay.includes(normalize(w)));
 }
