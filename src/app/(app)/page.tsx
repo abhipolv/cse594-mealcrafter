@@ -3,6 +3,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth/session";
 import { getHomeData } from "@/lib/data/home";
 import { ScreenView } from "@/components/screen-view";
+import { formatDay, localHour, today as todayIso } from "@/lib/time";
 
 function greeting(hour: number) {
   if (hour < 12) return "Good morning";
@@ -10,14 +11,10 @@ function greeting(hour: number) {
   return "Good evening";
 }
 
-const weekday = (iso: string) =>
-  new Date(`${iso}T12:00:00`).toLocaleDateString("en-US", { weekday: "short" });
 
 export default async function HomePage() {
   const user = await requireUser();
-  // TODO(track D): use the user's time zone instead of the server's.
-  const now = new Date();
-  const today = now.toISOString().slice(0, 10);
+  const today = todayIso();
   const { toCheck, week } = await getHomeData(user.id, today);
 
   return (
@@ -25,9 +22,9 @@ export default async function HomePage() {
       <ScreenView code="01" />
       <header>
         <h1 className="text-[28px] font-bold leading-tight">
-          {greeting(now.getHours())}, {user.displayName}
+          {greeting(localHour())}, {user.displayName}
         </h1>
-        <p className="mt-1 text-ink-2">{now.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}</p>
+        <p className="mt-1 text-ink-2">{formatDay(today, { weekday: "long", month: "short", day: "numeric" })}</p>
       </header>
 
       <Link href="/cook" className="btn-primary text-[17px]">
@@ -57,7 +54,7 @@ export default async function HomePage() {
           <ul className="flex flex-col gap-1">
             {week.map((m) => (
               <li key={m.id} className="grid grid-cols-[52px_1fr]">
-                <span className="font-semibold">{weekday(m.day)}</span>
+                <span className="font-semibold">{formatDay(m.day, { weekday: "short" })}</span>
                 <span>{m.title}</span>
               </li>
             ))}

@@ -4,14 +4,19 @@
 //   pnpm db:seed
 import { eq } from "drizzle-orm";
 import { db, schema, client } from "./db";
+import { addDays, today } from "../src/lib/time";
 
-const CODE = "sam-demo";
-
-function day(offset: number) {
-  const d = new Date();
-  d.setDate(d.getDate() + offset);
-  return d.toISOString().slice(0, 10);
+// Locally the demo code is "sam-demo". Anywhere else it must come from
+// DEMO_CODE, because the repo is public and the deployed app spends real
+// API credit.
+const isLocal = /@(localhost|127\.0\.0\.1)[:/]/.test(process.env.DATABASE_URL ?? "");
+const CODE = (process.env.DEMO_CODE ?? (isLocal ? "sam-demo" : "")).toLowerCase();
+if (!CODE) {
+  console.error("Set DEMO_CODE to an unguessable code when seeding a non-local database.");
+  process.exit(1);
 }
+
+const day = (offset: number) => addDays(today(), offset);
 
 async function main() {
   await db.delete(schema.users).where(eq(schema.users.code, CODE)); // cascades
