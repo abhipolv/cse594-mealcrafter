@@ -11,15 +11,35 @@ import {
 } from "./types";
 import type { ProviderResult } from "./index";
 
-const client = new Anthropic(); // reads ANTHROPIC_API_KEY
+// Two ways to reach a model, same request format:
+//   anthropic  : Anthropic's API directly (ANTHROPIC_API_KEY). Model ids like "claude-sonnet-5-5".
+//   openrouter : OpenRouter's Anthropic-compatible endpoint (OPENROUTER_API_KEY).
+//                Model ids like "anthropic/claude-sonnet-5.5" or "openai/gpt-6-luna",
+//                so the model bake-off can try other vendors without code changes.
+// AI_PROVIDER picks one; otherwise whichever key is set wins (Anthropic first).
+const PROVIDER: "anthropic" | "openrouter" =
+  process.env.AI_PROVIDER === "openrouter" ||
+  (process.env.AI_PROVIDER !== "anthropic" && !process.env.ANTHROPIC_API_KEY && !!process.env.OPENROUTER_API_KEY)
+    ? "openrouter"
+    : "anthropic";
 
-const RECOGNIZER_MODEL = process.env.RECOGNIZER_MODEL ?? "claude-opus-5-5";
-const SUGGESTER_MODEL = process.env.SUGGESTER_MODEL ?? "claude-sonnet-5-5";
+const client =
+  PROVIDER === "openrouter"
+    ? new Anthropic({ baseURL: "https://openrouter.ai/api", apiKey: null, authToken: process.env.OPENROUTER_API_KEY })
+    : new Anthropic(); // reads ANTHROPIC_API_KEY
+
+const DEFAULTS = {
+  anthropic: { recognizer: "claude-opus-5-5", suggester: "claude-sonnet-5-5" },
+  openrouter: { recognizer: "anthropic/claude-opus-5.5", suggester: "anthropic/claude-sonnet-5.5" },
+}[PROVIDER];
+const RECOGNIZER_MODEL = process.env.RECOGNIZER_MODEL || DEFAULTS.recognizer;
+const SUGGESTER_MODEL = process.env.SUGGESTER_MODEL || DEFAULTS.suggester;
 
 // Server-side refusal fallback (on by default for Opus 5.5 / Sonnet 5.5; Haiku
 // has none). It re-runs a declined request on another model inside one call.
+// Anthropic's API only; OpenRouter does not offer it.
 function fallbackParams(model: string) {
-  if (model.startsWith("claude-haiku")) return {};
+  if (PROVIDER !== "anthropic" || model.startsWith("claude-haiku")) return {};
   return {
     betas: ["server-side-fallback-2026-07-01" as const],
     fallbacks: "default" as const,
