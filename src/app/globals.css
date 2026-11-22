@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+/* MealCrafter wireframe look (Stage 2 Figma): ink on white, gray secondary
+   text, 1.5px ink borders, a dashed border for "needs your check", and
+   Michigan Maize only as a fill behind ink text. No other colors. */
+:root {
+  --ink: #131516;
+  --ink-2: #555b5e;
+  --line: #d4d6d7;
+  --fill: #f0f0f0;
+  --paper: #ffffff;
+  --maize: #ffcb05;
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-line: var(--line);
+  --color-fill: var(--fill);
+  --color-paper: var(--paper);
+  --color-maize: var(--maize);
+  --font-sans: var(--font-inter);
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+/* Cards: solid border = settled, dashed = waits for the user's check. */
+@utility card {
+  border: 1.5px solid var(--ink);
+  border-radius: 12px;
+  padding: 16px;
+  background: var(--paper);
+}
+@utility card-check {
+  border: 1.5px dashed var(--ink);
+  border-radius: 12px;
+  padding: 16px;
+  background: var(--paper);
+}
+@utility btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1.5px solid var(--ink);
+  font-weight: 600;
+  background: var(--paper);
+  color: var(--ink);
+}
+@utility btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1.5px solid var(--ink);
+  font-weight: 600;
+  background: var(--ink);
+  color: var(--paper);
+}
+@utility chip-maize {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--maize);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+@utility section-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
