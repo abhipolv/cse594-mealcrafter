@@ -17,6 +17,8 @@
     "db:seed": "tsx --env-file-if-exists=.env.local scripts/seed.ts",
     "db:studio": "drizzle-kit studio",
     "user:add": "tsx --env-file-if-exists=.env.local scripts/add-user.ts",
+    "user:list": "tsx --env-file-if-exists=.env.local scripts/list-users.ts",
+    "user:list:prod": "tsx --env-file=.env.production.local scripts/list-users.ts",
     "test:e2e": "playwright test"
   },
   "dependencies": {
