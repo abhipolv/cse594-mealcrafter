@@ -104,5 +104,6 @@ export async function cookMeal(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/fridge");
   revalidatePath("/plan");
-  redirect(affected.length ? `/plan/replan?meal=${affected[0]}&reason=used` : "/?cooked=1");
+  const lost = used.filter((i) => i.reservedForMealId === affected[0]).map((i) => i.id);
+  redirect(affected.length ? `/plan/replan?meal=${affected[0]}&used=${lost.join(",")}` : "/?cooked=1");
 }
