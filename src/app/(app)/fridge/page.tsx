@@ -75,13 +75,13 @@ export default async function FridgePage() {
       )}
 
       {s.toCheck.length > 0 && (
-        <Link href="/check?from=/fridge" className="card-check pressable flex items-center gap-3">
-          <span className="chip-maize !px-2.5 !text-[14px] tabular-nums">{s.toCheck.length}</span>
-          <span className="flex min-w-0 flex-1 flex-col">
-            <span className="text-[16px] font-semibold">to check</span>
-            <span className="text-[14px] text-ink-2">Kept out of your meals until you check them.</span>
+        <Link href="/check?from=/fridge" className="card-check pressable flex flex-col gap-1">
+          <span className="flex items-center gap-2">
+            <span className="chip-maize !px-2.5 !text-[14px] tabular-nums">{s.toCheck.length}</span>
+            <span className="flex-1 text-[16px] font-semibold">to check</span>
+            <span className="font-semibold">Check &gt;</span>
           </span>
-          <span className="shrink-0 font-semibold">Check &gt;</span>
+          <span className="text-[14px] text-ink-2">Kept out of your meals until you check them.</span>
         </Link>
       )}
 
