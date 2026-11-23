@@ -37,3 +37,45 @@ export function addDays(iso: string, days: number): string {
 export function formatDay(iso: string, options: Intl.DateTimeFormatOptions): string {
   return new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { ...options, timeZone: "UTC" });
 }
+
+/** Whole days from `from` to `to` (both YYYY-MM-DD); negative when `to` is earlier. */
+export function daysBetween(from: string, to: string): number {
+  return Math.round((Date.parse(`${to}T12:00:00Z`) - Date.parse(`${from}T12:00:00Z`)) / 86_400_000);
+}
+
+/** The local calendar day (YYYY-MM-DD) of a timestamp. */
+export function dayOf(at: Date): string {
+  return today(at);
+}
+
+/** "Sun 7:42 pm" for a timestamp, in the app time zone. */
+export function formatMoment(at: Date): string {
+  const f = new Intl.DateTimeFormat("en-US", {
+    timeZone: APP_TIME_ZONE,
+    weekday: "short",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  const p = Object.fromEntries(f.formatToParts(at).map((x) => [x.type, x.value]));
+  return `${p.weekday} ${p.hour}:${p.minute} ${String(p.dayPeriod).toLowerCase()}`;
+}
+
+/** Monday of the week that contains `iso`. */
+export function weekStart(iso: string): string {
+  const dow = new Date(`${iso}T12:00:00Z`).getUTCDay(); // 0 = Sunday
+  return addDays(iso, dow === 0 ? -6 : 1 - dow);
+}
+
+/**
+ * "today", "tomorrow", "yesterday", the weekday within a week either way, or
+ * "Nov 30" further out. Used for use-by dates and plan days.
+ */
+export function relativeDay(iso: string, todayIso: string): string {
+  const d = daysBetween(todayIso, iso);
+  if (d === 0) return "today";
+  if (d === 1) return "tomorrow";
+  if (d === -1) return "yesterday";
+  if (d > 1 && d < 7) return formatDay(iso, { weekday: "short" });
+  if (iso.slice(0, 4) !== todayIso.slice(0, 4) && Math.abs(d) > 180) return formatDay(iso, { month: "short", year: "numeric" });
+  return formatDay(iso, { month: "short", day: "numeric" });
+}

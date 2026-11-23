@@ -21,7 +21,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
       <body className="min-h-full font-sans">
         {/* Phone-width column; on a laptop it sits centered like the Figma frames. */}
-        <div className="mx-auto flex min-h-dvh max-w-[430px] flex-col bg-paper sm:border-x sm:border-line">
+        <div className="mx-auto flex min-h-dvh max-w-[430px] flex-col bg-paper pt-[env(safe-area-inset-top)] sm:border-x sm:border-line">
           {children}
         </div>
       </body>

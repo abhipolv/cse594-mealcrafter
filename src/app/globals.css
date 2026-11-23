@@ -25,6 +25,21 @@
 body {
   background: var(--paper);
   color: var(--ink);
+  -webkit-tap-highlight-color: transparent;
+  text-rendering: optimizeLegibility;
+}
+
+/* One visible focus ring for keyboard and switch users. */
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* iOS zooms into inputs under 16px; keep form text at 17px. */
+input,
+select,
+textarea {
+  font-size: 17px;
 }
 
 /* Cards: solid border = settled, dashed = waits for the user's check. */
@@ -44,25 +59,137 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 44px;
+  gap: 8px;
+  min-height: 48px;
   padding: 0 16px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1.5px solid var(--ink);
   font-weight: 600;
+  text-align: center;
   background: var(--paper);
   color: var(--ink);
+  transition:
+    transform 80ms ease-out,
+    background-color 120ms ease-out;
+  &:active {
+    transform: scale(0.98);
+    background: var(--fill);
+  }
+  &:disabled,
+  &[aria-disabled="true"] {
+    opacity: 0.4;
+    pointer-events: none;
+  }
 }
 @utility btn-primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 48px;
+  gap: 8px;
+  min-height: 52px;
   padding: 0 16px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1.5px solid var(--ink);
   font-weight: 600;
+  text-align: center;
   background: var(--ink);
   color: var(--paper);
+  transition:
+    transform 80ms ease-out,
+    opacity 120ms ease-out;
+  &:active {
+    transform: scale(0.98);
+    opacity: 0.85;
+  }
+  &:disabled,
+  &[aria-disabled="true"] {
+    opacity: 0.35;
+    pointer-events: none;
+  }
+}
+/* Small buttons inside cards (review answers, meal actions). Still 44px tall to touch. */
+@utility btn-sm {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+/* A whole card that is a link or button: it darkens a little while pressed. */
+@utility pressable {
+  transition:
+    transform 80ms ease-out,
+    background-color 120ms ease-out;
+  &:active {
+    transform: scale(0.99);
+    background: var(--fill);
+  }
+}
+/* Toggle chip for choices (setup, time). Selected chips are filled ink. */
+@utility chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 500;
+  transition: background-color 120ms ease-out;
+  &:active {
+    background: var(--fill);
+  }
+  &[aria-pressed="true"],
+  &[aria-checked="true"],
+  &:has(input:checked) {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  &:has(input:focus-visible) {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+}
+/* Static gray label: "Leftover", "15 min", "In fridge". */
+@utility tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--fill);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+/* Gray information box: "I can't tell if food is safe." */
+@utility note {
+  border-radius: 12px;
+  padding: 14px 16px;
+  background: var(--fill);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.4;
+}
+@utility field {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  &::placeholder {
+    color: var(--ink-2);
+  }
+  &:focus {
+    outline: 2px solid var(--ink);
+    outline-offset: 1px;
+  }
 }
 @utility chip-maize {
   display: inline-flex;
@@ -80,4 +207,35 @@ body {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--ink-2);
+}
+
+/* Bottom sheet (13, 14): the page behind is dimmed and not interactive. */
+@utility sheet {
+  border-radius: 20px 20px 0 0;
+  background: var(--paper);
+  padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
+  box-shadow: 0 -8px 32px rgb(0 0 0 / 0.12);
+  animation: sheet-up 200ms ease-out;
+}
+@keyframes sheet-up {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@utility fade-in {
+  animation: fade-in 160ms ease-out;
+}
+/* A bar pinned above the bottom edge that keeps the main action in reach (G10, setup). */
+@utility action-bar {
+  position: sticky;
+  bottom: 0;
+  margin: 0 -20px;
+  padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
+  background: linear-gradient(to bottom, rgb(255 255 255 / 0), var(--paper) 16px);
 }

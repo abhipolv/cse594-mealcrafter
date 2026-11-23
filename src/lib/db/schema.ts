@@ -29,8 +29,18 @@ export const users = pgTable("users", {
 export type UserRule = {
   tag: RuleTag; // e.g. "tree_nuts", "pork"
   kind: "allergy" | "religious" | "ethical" | "dislike";
+  /** Which setup choice added the rule, e.g. "halal" or "vegetarian" (G03). */
   note?: string;
 };
+
+/** A rule typed under "+ Other" in setup. The rule filter matches the words in ingredient names. */
+export type CustomRule = {
+  word: string; // e.g. "mango"
+  kind: "allergy" | "rule";
+};
+
+export const GOALS = ["use_soon", "protein", "variety", "fewer_pans"] as const;
+export type Goal = (typeof GOALS)[number];
 
 /** Setup answers (screens G01 to G06, edited on 17 Profile). */
 export const profiles = pgTable("profiles", {
@@ -38,12 +48,20 @@ export const profiles = pgTable("profiles", {
     .primaryKey()
     .references(() => users.id, { onDelete: "cascade" }),
   rules: jsonb("rules").$type<UserRule[]>().notNull().default([]),
+  customRules: jsonb("custom_rules").$type<CustomRule[]>().notNull().default([]),
+  /** Set once the user answered G02 and G03, even with "none", so setup can tell "none" from "not asked". */
+  rulesAnsweredAt: timestamp("rules_answered_at", { withTimezone: true }),
   budgetCents: integer("budget_cents"),
   budgetPeriod: text("budget_period", { enum: ["meal", "week", "two_weeks"] }),
   usualCookMinutes: integer("usual_cook_minutes"),
+  goals: jsonb("goals").$type<Goal[]>().notNull().default([]),
   fridgeShared: boolean("fridge_shared"),
+  /** People besides the user who share the fridge (G05, named on G08). */
+  roommates: integer("roommates").notNull().default(0),
   fridgeConsentAt: timestamp("fridge_consent_at", { withTimezone: true }),
   cooksFor: integer("cooks_for").notNull().default(1),
+  /** When the user confirmed the people they cook for agreed to it (update 8). */
+  othersAgreedAt: timestamp("others_agreed_at", { withTimezone: true }),
   setupCompletedAt: timestamp("setup_completed_at", { withTimezone: true }),
 });
 
@@ -164,6 +182,8 @@ export type Recipe = {
   steps: string[];
   extraCostCents?: number;
   nutrition?: { kcal?: number; proteinG?: number };
+  /** The suggester's one-line reason this meal fits tonight. */
+  why?: string;
 };
 
 /** A dinner on the week plan (12 to 16). */
@@ -188,7 +208,9 @@ export const suggestions = pgTable("suggestions", {
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  request: jsonb("request").$type<{ minutes: number; readyOnly: boolean }>().notNull(),
+  request: jsonb("request")
+    .$type<{ minutes: number; readyOnly: boolean; allowReserved?: boolean; forDay?: string }>()
+    .notNull(),
   shown: jsonb("shown").$type<Recipe[]>().notNull(),
   /** Meals the rule filter removed, with reasons. Evidence for N1. */
   filteredOut: jsonb("filtered_out")
@@ -206,8 +228,38 @@ export const cookLogs = pgTable("cook_logs", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
+  /** Which recipe was cooked: "s.<suggestionId>.<index>" or "p.<plannedMealId>". */
+  recipeRef: text("recipe_ref"),
+  plannedMealId: uuid("planned_meal_id").references(() => plannedMeals.id, { onDelete: "set null" }),
   cookedAsSuggested: boolean("cooked_as_suggested"),
   usedItemIds: jsonb("used_item_ids").$type<string[]>().notNull().default([]),
+  /** Spend on ingredients not already in the fridge; counts against the weekly budget (update 9). */
+  extraCostCents: integer("extra_cost_cents"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type PlanRow = {
+  id: string;
+  day: string;
+  title: string;
+  status: "planned" | "skipped" | "moved" | "cooked";
+  skipReason: string | null;
+};
+
+/** One change to the week plan (skip, move, swap, replan), kept so 16 can highlight and undo it. */
+export const planChanges = pgTable("plan_changes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  kind: text("kind", { enum: ["skip", "move", "swap", "replan", "add"] }).notNull(),
+  /** Rows as they were before the change, and the item reservations, for undo. */
+  before: jsonb("before")
+    .$type<{ meals: PlanRow[]; reservations: { itemId: string; status: string; mealId: string | null }[] }>()
+    .notNull(),
+  /** Per-day labels shown on 16, e.g. { "2026-11-27": "Moved from Thu" }. */
+  labels: jsonb("labels").$type<Record<string, string>>().notNull().default({}),
+  undoneAt: timestamp("undone_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

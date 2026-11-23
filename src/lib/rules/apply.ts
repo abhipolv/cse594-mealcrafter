@@ -14,6 +14,7 @@ export function applyRuleFilter(
   meals: SuggestedMeal[],
   userTags: readonly RuleTag[],
   inventory: FilterItem[],
+  customWords: readonly string[] = [],
 ): FilteredMeals {
   const byId = new Map(inventory.map((i) => [i.id, i]));
   const shown: SuggestedMeal[] = [];
@@ -23,6 +24,7 @@ export function applyRuleFilter(
       meal.ingredients.map((i) => ({ name: i.name, itemId: i.item_id ?? undefined })),
       userTags,
       byId,
+      customWords,
     );
     if (result.allowed) shown.push(meal);
     else filteredOut.push({ title: meal.title, reasons: result.reasons });

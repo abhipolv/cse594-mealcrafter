@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkMeal, matchTags, type FilterItem } from "./filter";
+import { checkMeal, matchTags, matchWords, type FilterItem } from "./filter";
 
 const inv = (items: FilterItem[]) => new Map(items.map((i) => [i.id, i]));
 
@@ -77,5 +77,31 @@ describe("checkMeal gaps found in review", () => {
   it("removes any item with unknown contents when the user has rules", () => {
     const items = inv([ready("l", "Leftover curry", { contentsKnown: false, mayContain: ["milk"] })]);
     expect(checkMeal([{ name: "Leftover curry", itemId: "l" }], ["pork"], items).allowed).toBe(false);
+  });
+});
+
+describe("custom rules typed under + Other", () => {
+  it("matches whole words only", () => {
+    expect(matchWords("Mango salsa", ["mango"])).toEqual(["mango"]);
+    expect(matchWords("Mangosteen", ["mango"])).toEqual([]);
+    expect(matchWords("Anything", ["  "])).toEqual([]);
+  });
+
+  it("removes a meal whose ingredient or linked item names the word", () => {
+    expect(checkMeal([{ name: "Diced mango" }], [], new Map(), ["mango"]).allowed).toBe(false);
+    const items = inv([ready("s", "Mango chutney")]);
+    expect(checkMeal([{ name: "chutney", itemId: "s" }], [], items, ["mango"]).allowed).toBe(false);
+  });
+
+  it("treats a custom rule like any rule for items with unknown contents", () => {
+    const items = inv([ready("l", "Leftover curry", { contentsKnown: false })]);
+    expect(checkMeal([{ name: "Leftover curry", itemId: "l" }], [], items, ["mango"]).allowed).toBe(false);
+  });
+});
+
+describe("pescatarian", () => {
+  it("rules out chicken but not salmon", () => {
+    expect(matchTags("Chicken thighs", ["land_meat"])).toEqual(["land_meat"]);
+    expect(matchTags("Salmon fillet", ["land_meat"])).toEqual([]);
   });
 });

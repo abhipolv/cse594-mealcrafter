@@ -10,6 +10,18 @@ export function aiMode(): "mock" | "live" {
 
 export type ProviderResult<T> = { value: T; model: string };
 
+/**
+ * Who receives fridge photos, named on the consent screen (G08). Mirrors the
+ * provider choice in anthropic.ts without importing the SDK.
+ */
+export function photoRecipient(): string | null {
+  if (aiMode() === "mock") return null;
+  const openrouter =
+    process.env.AI_PROVIDER === "openrouter" ||
+    (process.env.AI_PROVIDER !== "anthropic" && !process.env.ANTHROPIC_API_KEY && !!process.env.OPENROUTER_API_KEY);
+  return openrouter ? "OpenRouter, which passes them to an AI model" : "Anthropic's Claude AI model";
+}
+
 export async function recognize(input: RecognizeInput): Promise<ProviderResult<Recognition>> {
   if (aiMode() === "mock") return { value: mockRecognize(input), model: "mock" };
   const { liveRecognize } = await import("./anthropic");
