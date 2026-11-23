@@ -124,7 +124,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
           {shown}
           {reminders.length > shown.length && (
             <Link href="/fridge" className="text-[14px] font-semibold text-ink-2">
-              {reminders.length - shown.length} more in your fridge &gt;
+              See {reminders.length - shown.length} more {reminders.length - shown.length === 1 ? "reminder" : "reminders"} &gt;
             </Link>
           )}
         </section>
