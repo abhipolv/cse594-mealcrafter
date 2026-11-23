@@ -2,14 +2,20 @@ import "server-only";
 import { and, asc, eq, gt, gte, inArray, isNotNull, lte } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import type { PlanRow, Recipe } from "@/lib/db/schema";
-import { addDays, today as todayIso, weekStart } from "@/lib/time";
+import { addDays, today as todayIso } from "@/lib/time";
+import { expiryOf } from "@/lib/items";
+import { mealForDay, thawNeeds } from "@/lib/plan-logic";
+import { getItems } from "./items";
 
 export type Meal = typeof schema.plannedMeals.$inferSelect;
 
-/** The 7 days shown on 12: this week, Monday to Sunday. */
+/**
+ * The 7 days shown on 12: yesterday (what was cooked) through 5 days ahead.
+ * A rolling window, so on a Sunday the coming week is visible instead of a
+ * week that is almost over.
+ */
 export function planWeek(todayDay = todayIso()): string[] {
-  const monday = weekStart(todayDay);
-  return Array.from({ length: 7 }, (_, i) => addDays(monday, i));
+  return Array.from({ length: 7 }, (_, i) => addDays(todayDay, i - 1));
 }
 
 /** Meals in the visible week plus the next one, so moves past Sunday still show. */
@@ -126,4 +132,30 @@ export async function putMealOnDay(tx: Tx, userId: string, day: string, title: s
     }
   }
   return { mealId: meal.id, replaced: existing.length > 0 };
+}
+
+export type DayRow = {
+  day: string;
+  meal: Meal | null;
+  saved: { name: string; useBy: string | null }[];
+  thaw: string[];
+};
+
+/** Everything 12, 13 and 16 show: one row per day of this week. */
+export async function getWeekView(userId: string) {
+  const today = todayIso();
+  const days = planWeek(today);
+  const [meals, items] = await Promise.all([getMeals(userId, days[0], days[6]), getItems(userId, ["ready", "reserved"])]);
+  const planItems = items.map((i) => ({ ...i, useByDay: expiryOf(i).day }));
+  const thaw = thawNeeds(meals, planItems, today);
+  const rows: DayRow[] = days.map((day) => {
+    const meal = mealForDay(meals, day);
+    return {
+      day,
+      meal,
+      saved: meal ? planItems.filter((i) => i.status === "reserved" && i.reservedForMealId === meal.id).map((i) => ({ name: i.name, useBy: i.useByDay })) : [],
+      thaw: meal ? thaw.filter((t) => t.meal.id === meal.id).map((t) => t.item.name) : [],
+    };
+  });
+  return { today, days, rows, meals, items: planItems };
 }
