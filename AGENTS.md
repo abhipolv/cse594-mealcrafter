@@ -19,6 +19,25 @@ Four students (Abhi, Omer, Ahmad, Jeff) each own one track of screens and each w
 
 Coordination (owners, decisions, schedule) lives in the team's Stage 3 planner doc; your human has the link. The setup guide for humans is in the README.
 
+## Tracks
+
+The team splits the screens into four tracks, the same ones as in the planner doc. If your human says "work on track B" (or "task B"), that means the screens below. The `track` field in `src/lib/screens.ts` is the authoritative list.
+
+| Track | Screens, in build order | Issues |
+|---|---|---|
+| A. Setup and profile | G01, G02, G03, G04, G05, G06, then 17 (Profile) | #6 to #12, label `track-A` |
+| B. Adding food | G07, G09, G10, G11, then G08 (consent, shown only for a shared fridge) | #13 to #17, label `track-B` |
+| C. Fridge | G12, G13, then 11 (Did you cook it?) | #18, #19, #24, label `track-C` |
+| D. Meals and plan | 08, 09, 10, 12, 13, 14, 15, 16, then the Home update on 01 | #20 to #23, #25 to #29, label `track-D` |
+
+To start on a track:
+
+1. List its open issues with `gh issue list --label track-B` (or read the table above if `gh` is not available) and skip any issue that is assigned to someone else or already has an open PR.
+2. Take the first screen in build order that is still open. Read its issue, its entry in `src/lib/screens.ts` and its Figma frame.
+3. Build that one screen, open its PR, and stop. One screen per PR, unless two screens are small and only make sense together.
+
+The tracks can be built in parallel. Sam's demo data already has fridge items (some waiting for a check), food rules and a week plan, so track C and D screens work before track B can add real items. Issues #30 to #33 (test videos, protocol and consent, model comparison, preview database) are study tasks, not code tracks.
+
 ## Sources of truth
 
 - **Design:** the Figma frame for the screen, then the `updates` and `notes` for it in `src/lib/screens.ts`, which come from the Stage 2 report's planned updates (1 to 10). Where the frame and the notes disagree, the notes win.
