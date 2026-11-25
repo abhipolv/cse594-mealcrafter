@@ -8,6 +8,13 @@
       "when": 1795375994581,
       "tag": "0000_lonely_hardball",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1795398838194,
+      "tag": "0001_empty_scarecrow",
+      "breakpoints": true
     }
   ]
 }

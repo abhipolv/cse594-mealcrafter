@@ -21,6 +21,7 @@ export const RULE_TAGS = [
   "alcohol",
   "beef",
   "meat",
+  "land_meat",
   "animal_products",
 ] as const;
 
@@ -41,6 +42,7 @@ export const RULE_LABELS: Record<RuleTag, string> = {
   alcohol: "Alcohol in cooking",
   beef: "Beef",
   meat: "Meat (vegetarian)",
+  land_meat: "Meat other than fish (pescatarian)",
   animal_products: "Animal products (vegan)",
 };
 
@@ -72,8 +74,53 @@ export const RULE_KEYWORDS: Record<RuleTag, string[]> = {
   alcohol: ["wine", "beer", "rum", "vodka", "sake", "mirin", "brandy", "sherry", "bourbon", "whiskey", "liqueur", "vanilla extract"],
   beef: BEEF,
   meat: [...PORK, ...BEEF, ...POULTRY, ...FISH, ...SHELLFISH, "lamb", "goat", "meat", "gelatin", "anchovy paste"],
+  land_meat: [...PORK, ...BEEF, ...POULTRY, "lamb", "goat", "meat", "gelatin"],
   animal_products: [...PORK, ...BEEF, ...POULTRY, ...FISH, ...SHELLFISH, ...MILK, ...EGG, "lamb", "goat", "meat", "honey", "gelatin"],
 };
 
 /** Rules people often forget to report (Stage 1: halal only came up when asked about pork). */
 export const OFTEN_FORGOTTEN: RuleTag[] = ["pork", "gelatin", "alcohol"];
+
+/**
+ * Setup choices on G03 and the rule tags each one adds. The filter enforces
+ * the tags; `limits` is shown to the user so they know what is not checked.
+ */
+export const RULE_PRESETS = {
+  halal: { label: "Halal", tags: ["pork", "gelatin", "alcohol"], limits: "I can't check whether meat is halal-certified." },
+  kosher: { label: "Kosher", tags: ["pork", "shellfish"], limits: "I don't check meat and dairy in the same meal." },
+  no_pork: { label: "No pork", tags: ["pork"] },
+  no_beef: { label: "No beef", tags: ["beef"] },
+  no_alcohol: { label: "No alcohol in cooking", tags: ["alcohol"] },
+  no_gelatin: { label: "No gelatin", tags: ["gelatin"] },
+  vegetarian: { label: "Vegetarian", tags: ["meat"] },
+  vegan: { label: "Vegan", tags: ["animal_products"] },
+  pescatarian: { label: "Pescatarian", tags: ["land_meat"] },
+} as const satisfies Record<string, { label: string; tags: readonly RuleTag[]; limits?: string }>;
+
+export type RulePreset = keyof typeof RULE_PRESETS;
+
+/** Allergy chips on G02, in the Figma order. */
+export const ALLERGY_TAGS = [
+  "peanuts",
+  "tree_nuts",
+  "milk",
+  "egg",
+  "wheat_gluten",
+  "soy",
+  "fish",
+  "shellfish",
+  "sesame",
+] as const satisfies readonly RuleTag[];
+
+/** Short chip labels for allergy tags. */
+export const ALLERGY_LABELS: Record<(typeof ALLERGY_TAGS)[number], string> = {
+  peanuts: "Peanuts",
+  tree_nuts: "Tree nuts",
+  milk: "Milk",
+  egg: "Eggs",
+  wheat_gluten: "Wheat",
+  soy: "Soy",
+  fish: "Fish",
+  shellfish: "Shellfish",
+  sesame: "Sesame",
+};

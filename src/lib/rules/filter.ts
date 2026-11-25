@@ -7,6 +7,8 @@
 //      contents are unknown while the user has any rule (we cannot verify it).
 //      The recognizer marks single plain foods (eggs, a pepper) and readable
 //      labels as contents_known; answering a review card should set it too.
+//   4. an ingredient or the item it comes from names a word the user typed
+//      under "+ Other" in setup (custom rules, matched as whole words).
 // This is what lets us claim N1 (zero rule violations) even when a model is wrong.
 import { RULE_KEYWORDS, RULE_LABELS, type RuleTag } from "./taxonomy";
 
@@ -24,6 +26,12 @@ export type FilterResult = { allowed: boolean; reasons: string[] };
 
 function normalize(s: string): string {
   return ` ${s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim()} `;
+}
+
+/** Words from `words` that appear as whole words (or phrases) in `text`. */
+export function matchWords(text: string, words: readonly string[]): string[] {
+  const hay = normalize(text);
+  return words.filter((w) => normalize(w).trim() !== "" && hay.includes(normalize(w)));
 }
 
 /** Tags from `tags` whose keywords appear as whole words in `text`. */
@@ -47,12 +55,17 @@ export function checkMeal(
   ingredients: FilterIngredient[],
   userTags: readonly RuleTag[],
   inventory: Map<string, FilterItem>,
+  customWords: readonly string[] = [],
 ): FilterResult {
   const reasons: string[] = [];
+  const hasRules = userTags.length > 0 || customWords.length > 0;
 
   for (const ing of ingredients) {
     for (const tag of matchTags(ing.name, userTags)) {
       reasons.push(`${ing.name}: ${RULE_LABELS[tag].toLowerCase()}`);
+    }
+    for (const word of matchWords(ing.name, customWords)) {
+      reasons.push(`${ing.name}: ${word.toLowerCase()}`);
     }
 
     if (!ing.itemId) continue;
@@ -68,10 +81,13 @@ export function checkMeal(
     for (const tag of matchTags(item.name, userTags)) {
       reasons.push(`${item.name}: ${RULE_LABELS[tag].toLowerCase()}`);
     }
+    for (const word of matchWords(item.name, customWords)) {
+      reasons.push(`${item.name}: ${word.toLowerCase()}`);
+    }
     for (const tag of item.mayContain.filter((t) => userTags.includes(t))) {
       reasons.push(`${item.name}: may contain ${RULE_LABELS[tag].toLowerCase()}`);
     }
-    if (userTags.length > 0 && !item.contentsKnown) {
+    if (hasRules && !item.contentsKnown) {
       reasons.push(`${item.name}: ingredients unknown`);
     }
   }
